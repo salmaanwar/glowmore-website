@@ -1,0 +1,14 @@
+/* Page shell. Everything inside a screen comes from the Figma spec and tokens.css. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--color-bg-primary, #fff);
+  color: var(--color-text-primary, #19171a);
+  font-family: "Gilroy", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.site { position: relative; width: 1440px; margin: 0 auto; }
+.site [data-name] { min-width: 0; }
+.mega { position: absolute; left: 0; width: 1440px; z-index: 50; }
+.mega-scrim { height: 100vh; background: var(--color-bg-scrim, rgba(0, 0, 0, 0.5)); }
+img { user-select: none; }
