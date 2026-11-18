@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { BehaviorCtx, Node, Screen } from './render/Renderer';
+import { BehaviorCtx, Node, Screen, ViewportCtx } from './render/Renderer';
 import type { SpecNode } from './render/types';
 import { ROUTES } from './routes';
 import { makeResolver } from './behaviors';
 
 const loaders = import.meta.glob<{ default: SpecNode }>('./screens/*.json');
 const cache: Record<string, SpecNode> = {};
+// Screens designed as one browser window: they take the window height instead of the 1024 px artboard.
+const VIEWPORT: Record<string, number> = { 'signin': 700, 'signin-code': 700, 'minicart': 600, 'giftwrap': 600, 'product-soldout': 600 }; // min height each needs (design px)
 async function load(file: string) {
   if (cache[file]) return cache[file];
   const mod = await loaders[`./screens/${file}.json`]();
@@ -28,9 +30,10 @@ export default function App() {
   const [spec, setSpec] = useState<SpecNode | null>(cache[file] || null);
   const [mega, setMega] = useState<SpecNode | null>(null);
   const [scale, setScale] = useState(1);
+  const [winH, setWinH] = useState(window.innerHeight);
 
   useEffect(() => { let on = true; load(file).then(s => on && setSpec(s)); setMega(null); window.scrollTo(0, 0); document.title = `${title} · Glowmore`; return () => { on = false; }; }, [file, title]);
-  useEffect(() => { const fit = () => setScale(Math.min(1, window.innerWidth / 1440)); fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit); }, []);
+  useEffect(() => { const fit = () => { setScale(Math.min(1, window.innerWidth / 1440)); setWinH(window.innerHeight); }; fit(); window.addEventListener('resize', fit); return () => window.removeEventListener('resize', fit); }, []);
 
   const resolver = useMemo(() => makeResolver(
     to => nav(to),
@@ -45,7 +48,11 @@ export default function App() {
   return (
     <BehaviorCtx.Provider value={resolver}>
       <div className="site" style={{ zoom: scale }}>
-        {spec ? <Screen spec={spec} /> : <div style={{ height: '100vh' }} />}
+        {spec ? (
+          <ViewportCtx.Provider value={VIEWPORT[file] ? { H: spec.h, vh: Math.max(VIEWPORT[file], winH / scale) } : null}>
+            <Screen spec={spec} />
+          </ViewportCtx.Provider>
+        ) : <div style={{ height: '100vh' }} />}
         {mega && (
           <div className="mega" style={{ top: menuTop }} onMouseLeave={() => setMega(null)}>
             <Node n={{ ...mega, abs: undefined }} dir={null} path={[]} />

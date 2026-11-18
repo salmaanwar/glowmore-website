@@ -15,6 +15,8 @@ const BASE = import.meta.env.BASE_URL;
 export interface Behavior { onClick?: (e: React.MouseEvent) => void; onMouseEnter?: () => void; text?: string; hidden?: boolean; className?: string; render?: React.ReactNode }
 export type Resolve = (node: SpecNode, path: SpecNode[]) => Behavior | undefined;
 export const BehaviorCtx = createContext<Resolve>(() => undefined);
+/* Viewport screens (sign in, overlays): the root takes the window height (vh, in design px). H is the Figma frame height. */
+export const ViewportCtx = createContext<{ H: number; vh: number } | null>(null);
 
 const px = (v: Num | undefined): string | undefined => {
   if (v === undefined) return undefined;
@@ -120,8 +122,18 @@ export function Node({ n, dir, path }: { n: SpecNode; dir: 'r' | 'c' | null; pat
   const resolve = useContext(BehaviorCtx);
   const b = resolve(n, path);
   if (b?.hidden) return null;
+  const vp = useContext(ViewportCtx);
   const abs = !!n.abs && path.length > 0;
   const style: React.CSSProperties = abs ? { position: 'absolute', left: n.x, top: n.y, width: n.w, height: n.h } : childSize(n, dir);
+  if (vp && path.length === 0) { style.height = vp.vh; style.overflow = 'hidden'; }
+  if (vp && path.length === 1 && !abs) style.zIndex = 1;                       /* content above bottom art */
+  if (vp && dir === 'c' && n.grow && n.t !== 'T') style.overflowY = 'auto';    /* growing areas (drawer lists) scroll when the window is short */
+  if (vp && abs && n.y !== undefined) {
+    const d = vp.vh - vp.H;
+    if (Math.abs(n.h - vp.H) < 1 && Math.abs(n.y) < 1) { style.height = vp.vh; if (path.length === 1) style.zIndex = 2; } /* full-height overlay / drawer: stretch, above the page */
+    else if ((path.length === 1 || Math.abs(path[path.length - 1].h - vp.H) < 1) && Math.abs(n.y + n.h / 2 - vp.H / 2) < 60) { style.top = n.y + d / 2; style.zIndex = 2; } /* centred dialog (also inside a full-height overlay) */
+    else if (path.length === 1 && n.h < vp.H && n.y + n.h / 2 > vp.H * 0.6) { style.top = n.y + d; style.zIndex = 0; } /* bottom art (sparkles, fade), behind the content */
+  }
   if (n.rot) { style.transform = `rotate(${-n.rot}deg)`; style.transformOrigin = '0 0'; }
   if (n.op !== undefined) style.opacity = n.op;
   if (b?.onClick) style.cursor = 'pointer';
