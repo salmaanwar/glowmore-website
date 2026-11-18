@@ -58,7 +58,7 @@ export function makeResolver(go: (to: string) => void, back: () => void, openMeg
 
     // product cards open the product page (their Add to bag button wins, handled above)
     if (s === 'Product Card') return click('/product');
-    if (s === 'Category Tile') return click(label(n) === 'Skincare' ? '/skincare' : '/serums');
+    if (s === 'Category Tile') return { ...click(label(n) === 'Skincare' ? '/skincare' : '/serums'), className: 'cat-tile' }; /* hover: see site.css (Figma: On hover -> State=Hover, Smart animate 200 ms ease out) */
     if (s === 'Image Tile' || s === 'Brand Tile' || s === 'Brand Card') return click('/serums');
     if (s === 'Color Swatch' && route === '/product') return click('/product/shades');
     if (s === 'Order Card') return click('/track/on-the-way');

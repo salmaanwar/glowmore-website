@@ -12,3 +12,9 @@ body {
 .mega { position: absolute; left: 0; width: 1440px; z-index: 50; }
 .mega-scrim { height: 100vh; background: var(--color-bg-scrim, rgba(0, 0, 0, 0.5)); }
 img { user-select: none; }
+
+/* Category Tile hover, as prototyped in Figma: On hover -> State=Hover, Smart animate, ease out, 200 ms.
+   Hover variant: the icon tilts 15deg (counter-clockwise) around its centre, the label goes base/Medium -> base/Bold. */
+.cat-tile [data-name="Icon"] { transition: transform 200ms ease-out; transform-origin: 50% 50%; }
+.cat-tile:hover [data-name="Icon"] { transform: rotate(-15deg); }
+.cat-tile:hover [data-name="Label"] { font-weight: 700 !important; }
